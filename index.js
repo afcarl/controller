@@ -9,6 +9,6 @@ app.listen(PORT, function() {
 });
 
 process.on('uncaughtException', function(err) {
-  console.log('Caught exception: ' + err);
+  console.log('Caught exception: ' + err, err.stack);
   process.exit(1);
 });
