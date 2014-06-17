@@ -1308,7 +1308,7 @@ delayedStream	node_modules/request/node_modules/form-data/node_modules/combined-
 delayedStream	node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-max-data-size.js	/^  var delayedStream = DelayedStream.create(source, {maxDataSize: 1024, pauseStream: false});$/;"	v
 delayedStream	node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-pipe-resumes.js	/^  var delayedStream = DelayedStream.create(source, {pauseStream: false});$/;"	v
 delayedStream	node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-proxy-readable.js	/^  var delayedStream = DelayedStream.create(source, {pauseStream: false});$/;"	v
-deployAppInstance	lib/app.js	/^function deployAppInstance(hostname, port, image, envs, fn) {$/;"	f
+deployAppInstance	lib/app.js	/^function deployAppInstance(domain, hostname, existingPort, image, fn) {$/;"	f
 deployAppInstances	lib/app.js	/^function deployAppInstances(domain, image, fn) {$/;"	f
 deprecate	node_modules/express/lib/application.js	/^var deprecate = require('.\/utils').deprecate;$/;"	v
 deprecate	node_modules/express/lib/response.js	/^var deprecate = require('.\/utils').deprecate;$/;"	v
@@ -1699,7 +1699,9 @@ g.h	node_modules/lodash/dist/lodash.underscore.min.js	/^}),l&&Kr(n,function(n,r,
 generators.v1	node_modules/request/node_modules/node-uuid/test/test.js	/^  v1: uuid.v1,$/;"	p
 getBody	node_modules/body-parser/index.js	/^var getBody = require('raw-body');$/;"	v
 getCharsetPriority	node_modules/express/node_modules/accepts/node_modules/negotiator/lib/charset.js	/^function getCharsetPriority(charset, accepted) {$/;"	f
+getDockerClient	lib/app.js	/^function getDockerClient(hostname) {$/;"	f
 getEncodingPriority	node_modules/express/node_modules/accepts/node_modules/negotiator/lib/encoding.js	/^function getEncodingPriority(encoding, accepted) {$/;"	f
+getHostnameFromHost	lib/app.js	/^function getHostnameFromHost(host) {$/;"	f
 getIndexOf	node_modules/lodash/dist/lodash.compat.js	/^    function getIndexOf() {$/;"	f
 getIndexOf	node_modules/lodash/dist/lodash.js	/^    function getIndexOf() {$/;"	f
 getIndexOf	node_modules/lodash/dist/lodash.underscore.js	/^  function getIndexOf() {$/;"	f
@@ -1707,6 +1709,7 @@ getIndexOf	node_modules/lodash/lodash.js	/^    function getIndexOf() {$/;"	f
 getLanguagePriority	node_modules/express/node_modules/accepts/node_modules/negotiator/lib/language.js	/^function getLanguagePriority(language, accepted) {$/;"	f
 getMediaTypePriority	node_modules/express/node_modules/accepts/node_modules/negotiator/lib/mediaType.js	/^function getMediaTypePriority(type, accepted) {$/;"	f
 getPath	node_modules/request/node_modules/json-stringify-safe/stringify.js	/^function getPath (value, seen, keys) {$/;"	f
+getPortFromHost	lib/app.js	/^function getPortFromHost(host) {$/;"	f
 getPublicSuffix	node_modules/request/node_modules/tough-cookie/generate-pubsuffix.js	/^function getPublicSuffix(domain) {$/;"	f
 getPublicSuffix	node_modules/request/node_modules/tough-cookie/lib/pubsuffix.js	/^module.exports.getPublicSuffix = function getPublicSuffix(domain) {$/;"	f
 getSafe	node_modules/request/lib/getSafe.js	/^function getSafe (self, uuid) {$/;"	f
@@ -2054,7 +2057,6 @@ keys	node_modules/express/node_modules/accepts/node_modules/mime/test.js	/^var k
 keys	node_modules/express/node_modules/send/node_modules/mime/test.js	/^var keys = [].concat(Object.keys(apacheTypes.types))$/;"	v
 keys	node_modules/express/node_modules/type-is/node_modules/mime/test.js	/^var keys = [].concat(Object.keys(apacheTypes.types))$/;"	v
 keys	node_modules/request/node_modules/mime/test.js	/^var keys = [].concat(Object.keys(apacheTypes.types))$/;"	v
-killAppInstance	lib/app.js	/^function killAppInstance(hostname, port, fn) {$/;"	f
 kt.At	node_modules/lodash/dist/lodash.min.js	/^else o=[],h(n,function(n,e,u){o[++r]=t(n,e,u)});return o}function At(n,t,e){var u=-1\/0,o=u;if(typeof t!="function"&&e&&e[t]===n&&(t=null),null==t&&Te(n)){e=-1;for(var i=n.length;++e<i;){var a=n[e];a>o&&(o=a)}}else t=null==t&&kt(n)?r:J.createCallback(t,e,3),St(n,function(n,e,r){e=t(n,e,r),e>u&&(u=e,o=n)});return o}function Dt(n,t,e,r){if(!n)return e;var u=3>arguments.length;t=J.createCallback(t,r,4);var o=-1,i=n.length;if(typeof i=="number")for(u&&(e=n[++o]);++o<i;)e=t(e,n[o],o,n);else h(n,function(n,r,o){e=u?(u=false,n):t(e,n,r,o)$/;"	f
 kt.Ct	node_modules/lodash/dist/lodash.min.js	/^}function jt(n){return typeof n=="number"||n&&typeof n=="object"&&ce.call(n)==W||false}function kt(n){return typeof n=="string"||n&&typeof n=="object"&&ce.call(n)==P||false}function xt(n){for(var t=-1,e=Fe(n),r=e.length,u=Xt(r);++t<r;)u[t]=n[e[t]];return u}function Ct(n,t,e){var r=-1,u=st(),o=n?n.length:0,i=false;return e=(0>e?Ie(0,o+e):e)||0,Te(n)?i=-1<u(n,t,e):typeof o=="number"?i=-1<(kt(n)?n.indexOf(t,e):u(n,t,e)):h(n,function(n){return++r<e?void 0:!(i=n===t)}),i}function Ot(n,t,e){var r=true;t=J.createCallback(t,e,3),e=-1;$/;"	f
 kt.Dt	node_modules/lodash/dist/lodash.min.js	/^else o=[],h(n,function(n,e,u){o[++r]=t(n,e,u)});return o}function At(n,t,e){var u=-1\/0,o=u;if(typeof t!="function"&&e&&e[t]===n&&(t=null),null==t&&Te(n)){e=-1;for(var i=n.length;++e<i;){var a=n[e];a>o&&(o=a)}}else t=null==t&&kt(n)?r:J.createCallback(t,e,3),St(n,function(n,e,r){e=t(n,e,r),e>u&&(u=e,o=n)});return o}function Dt(n,t,e,r){if(!n)return e;var u=3>arguments.length;t=J.createCallback(t,r,4);var o=-1,i=n.length;if(typeof i=="number")for(u&&(e=n[++o]);++o<i;)e=t(e,n[o],o,n);else h(n,function(n,r,o){e=u?(u=false,n):t(e,n,r,o)$/;"	f
@@ -2097,6 +2099,7 @@ line	node_modules/request/node_modules/http-signature/node_modules/ctype/tools/j
 loadAppEnvs	lib/app.js	/^function loadAppEnvs(domain, fn) {$/;"	f
 loadAppHosts	lib/app.js	/^function loadAppHosts(domain, fn) {$/;"	f
 loadContainers	lib/app.js	/^function loadContainers(hostname, fn) {$/;"	f
+loadNewInstanceConfig	lib/app.js	/^function loadNewInstanceConfig(domain, hostname, image, fn) {$/;"	f
 loadPortsInUse	lib/app.js	/^function loadPortsInUse(hostname, fn) {$/;"	f
 localRequire.exists	node_modules/dockerode/node_modules/docker-modem/node_modules/readable-stream/node_modules/isarray/build/build.js	/^  localRequire.exists = function(path) {$/;"	f
 localRequire.resolve	node_modules/dockerode/node_modules/docker-modem/node_modules/readable-stream/node_modules/isarray/build/build.js	/^  localRequire.resolve = function(path) {$/;"	f
@@ -2685,7 +2688,6 @@ remove	node_modules/lodash/dist/lodash.js	/^    function remove(array, callback,
 remove	node_modules/lodash/dist/lodash.min.js	/^})},J.remove=function(n,t,e){var r=-1,u=n?n.length:0,o=[];for(t=J.createCallback(t,e,3);++r<u;)e=n[r],t(e,r,n)&&(o.push(e),de.call(n,r--,1),u--);return o},J.rest=qt,J.shuffle=Tt,J.sortBy=function(n,t,e){var r=-1,o=Te(t),i=n?n.length:0,p=Xt(typeof i=="number"?i:0);for(o||(t=J.createCallback(t,e,3)),St(n,function(n,e,u){var i=p[++r]=f();o?i.m=Rt(t,function(t){return n[t]}):(i.m=a())[0]=t(n,e,u),i.n=r,i.o=n}),i=p.length,p.sort(u);i--;)n=p[i],p[i]=n.o,o||l(n.m),c(n);return p},J.tap=function(n,t){return t(n),n$/;"	f
 remove	node_modules/lodash/lodash.js	/^    function remove(array, callback, thisArg) {$/;"	f
 removeHostFromPool	lib/app.js	/^function removeHostFromPool(domain, hostname, port, fn) {$/;"	f
-replaceAppInstance	lib/app.js	/^function replaceAppInstance(domain, host, image, fn) {$/;"	f
 req	node_modules/dockerode/node_modules/docker-modem/lib/modem.js	/^  var req = http.request(optionsf, function() {});$/;"	v
 req	node_modules/express-validator/test/basic.js	/^var req = require('.\/helpers\/req');$/;"	v
 req	node_modules/express-validator/test/bodyOnly.js	/^var req = require('.\/helpers\/req');$/;"	v
@@ -2780,6 +2782,7 @@ rfloat	node_modules/request/node_modules/http-signature/node_modules/ctype/ctio.
 rgint16	node_modules/request/node_modules/http-signature/node_modules/ctype/ctio.js	/^function rgint16(buffer, endian, offset)$/;"	f
 rgint32	node_modules/request/node_modules/http-signature/node_modules/ctype/ctio.js	/^function rgint32(buffer, endian, offset)$/;"	f
 rgint64	node_modules/request/node_modules/http-signature/node_modules/ctype/ctio.js	/^function rgint64(buffer, endian, offset)$/;"	f
+rollbackContainer	lib/app.js	/^function rollbackContainer(config, existingPort, fn) {$/;"	f
 root	node_modules/async/lib/async.js	/^    var root, previous_async;$/;"	v
 root	node_modules/request/node_modules/form-data/node_modules/combined-stream/test/common.js	/^var root = path.join(__dirname, '..');$/;"	v
 roundUpToNextPowerOf2	node_modules/dockerode/node_modules/docker-modem/node_modules/readable-stream/lib/_stream_readable.js	/^function roundUpToNextPowerOf2(n) {$/;"	f
@@ -2795,19 +2798,16 @@ ruint32	node_modules/request/node_modules/http-signature/node_modules/ctype/ctio
 ruint64	node_modules/request/node_modules/http-signature/node_modules/ctype/ctio.js	/^function ruint64(buffer, endian, offset)$/;"	f
 ruint8	node_modules/request/node_modules/http-signature/node_modules/ctype/ctio.js	/^function ruint8(buffer, endian, offset)$/;"	f
 run	node_modules/redis/benches/stress/speed/speed.js	/^function run(obj, codec) {$/;"	f
-runContainer	lib/app.js	/^function runContainer(hostname, exposedPort, image, envs, fn) {$/;"	f
+runContainer	lib/app.js	/^function runContainer(config, fn) {$/;"	f
 runContainer.createOptions.AttachStderr	lib/app.js	/^    'AttachStderr': true,$/;"	p
 runContainer.createOptions.AttachStdin	lib/app.js	/^    'AttachStdin': false,$/;"	p
 runContainer.createOptions.AttachStdout	lib/app.js	/^    'AttachStdout': true,$/;"	p
-runContainer.createOptions.Cmd	lib/app.js	/^    'Cmd': null,$/;"	p
-runContainer.createOptions.Env	lib/app.js	/^    'Env': envs,$/;"	p
+runContainer.createOptions.Env	lib/app.js	/^    'Env': config.envs,$/;"	p
 runContainer.createOptions.Hostname	lib/app.js	/^    'Hostname': '',$/;"	p
-runContainer.createOptions.Image	lib/app.js	/^    'Image': image,$/;"	p
 runContainer.createOptions.OpenStdin	lib/app.js	/^    'OpenStdin': false,$/;"	p
 runContainer.createOptions.StdinOnce	lib/app.js	/^    'StdinOnce': false,$/;"	p
 runContainer.createOptions.Tty	lib/app.js	/^    'Tty': true,$/;"	p
 runContainer.createOptions.User	lib/app.js	/^    'User': '',$/;"	p
-runContainer.createOptions.Volumes	lib/app.js	/^    'Volumes': {},$/;"	p
 run_next_test	node_modules/redis/test.js	/^run_next_test = function run_next_test() {$/;"	f
 s	node_modules/redis/benches/stress/speed/speed.js	/^var s = '0';$/;"	v
 s	node_modules/request/node_modules/form-data/node_modules/combined-stream/test/integration/test-empty-string.js	/^var s = CombinedStream.create();$/;"	v
@@ -2887,7 +2887,7 @@ specify	node_modules/express/node_modules/accepts/node_modules/negotiator/lib/en
 specify	node_modules/express/node_modules/accepts/node_modules/negotiator/lib/language.js	/^function specify(language, spec) {$/;"	f
 sprintf	node_modules/request/node_modules/http-signature/lib/signer.js	/^var sprintf = require('util').format;$/;"	v
 statusCodes	node_modules/express/lib/response.js	/^var statusCodes = http.STATUS_CODES;$/;"	v
-stopContainer	lib/app.js	/^function stopContainer(hostname, containerId, fn) {$/;"	f
+stopContainer	lib/app.js	/^function stopContainer(hostname, port, fn) {$/;"	f
 str	node_modules/redis/benches/buffer_bench.js	/^var str = "This is a nice String.",$/;"	v
 stream	node_modules/request/node_modules/http-signature/node_modules/assert-plus/assert.js	/^function stream(arg, name) {$/;"	f
 stream.pause	node_modules/dockerode/node_modules/docker-modem/node_modules/readable-stream/lib/_stream_readable.js	/^  stream.pause = function() {$/;"	c
