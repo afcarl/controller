@@ -10,24 +10,24 @@ the cluster state using the CLI tool.
 
 ### Lingo
 
-**Hosts**
+#### Hosts
 A host is a single node's IP. Multiple application instances can be deployed on a
 single host. When deploying a new application instance, hosts with the least utilization
 are selected for deployment. Hosts can be added or removed from the cluster at any time.
 
-**Apps**
+#### Apps
 An App is represented by a domain name and a set of environmental variables. App
 instances are deployed to multiple hosts. Ports are dynamically assigned and propagated
 to the routers.
 
-**Instances**
+#### Instances
 Application instances are deployed to hosts using the built in Docker Remote API.
 
-**Envs**
+#### Envs
 Each application can be configured using environmental variables. Variables can be set
 at any time and will trigger a restart.
 
-**Router**
+#### Router
 Traffic is routed to application components via the routers. Routers are applications
 which dynamically HTTP requests to the appropriate back-end instances. Routers are
 notified of updates to the routing table using Redis PubSub.
