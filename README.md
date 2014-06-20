@@ -2,7 +2,7 @@
 ## Docker Controller
 
 The controller manages the application container cluster. It works with one
-or more routers to create a highly available and redundant cluster for container-based
+or more routers to create a highly available and redundant cluster for Docker-based
 applications.
 
 The controller exposes a number of utility API endpoints that can be used to manage
