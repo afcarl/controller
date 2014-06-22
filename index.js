@@ -5,7 +5,7 @@ var app  = require('./lib/app');
 var PORT = process.env.PORT || 3000;
 
 app.listen(PORT, function() {
-  console.log('Listing on port ' + PORT);
+  console.log('Listening on port ' + PORT);
 });
 
 process.on('uncaughtException', function(err) {
