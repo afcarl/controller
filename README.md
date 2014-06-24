@@ -65,6 +65,8 @@ Remove an environmental variables from an application.
 
 ### TODO
 
+* Better error handling for failed image downloads
+
 * Storing revisions for application state will allow for simple rollback. However,
 rollbacks can still be achieved by deploying a specific Docker image tag.
 
