@@ -1,5 +1,5 @@
 
-## Docker Controller
+## Longshoreman Controller
 
 The controller manages the application container cluster. It works with one
 or more routers to create a highly available and redundant cluster for Docker-based
