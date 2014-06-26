@@ -1,4 +1,3 @@
-
 ## Longshoreman Controller
 
 The controller manages the application container cluster. It works with one
@@ -18,7 +17,7 @@ are selected for deployment. Hosts can be added or removed from the cluster at a
 #### Apps
 An App is represented by a domain name and a set of environmental variables. App
 instances are deployed to multiple hosts. Ports are dynamically assigned and propagated
-to the routers.
+to the routers. Longshoreman applications must include an `EXPOSE 3000` port as the external to internal port mapping is currently not configurable. This will change shortly.
 
 #### Instances
 Application instances are deployed to hosts using the built in Docker Remote API.
@@ -62,6 +61,10 @@ Add a new environmental variables to an application.
 
 #### `DELETE /:app/envs/:env`
 Remove an environmental variables from an application.
+
+## Start a Controller
+
+Just run `sudo docker.io run -e REDIS_HOST=$REDIS_HOST_IP -e REDIS_PORT=6379 longshoreman/controller` on your controller node(s) to start directing traffic to your Docker application instances. `$REDIS_HOST_IP` is the IP address of your Redis database.
 
 ### TODO
 
