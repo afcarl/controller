@@ -1,7 +1,7 @@
 /* jslint node: true */
 'use strict';
 
-var app  = require('./lib/app');
+var app  = require('./src/app');
 var PORT = process.env.PORT || 3000;
 
 app.listen(PORT, function() {

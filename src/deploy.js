@@ -1,7 +1,7 @@
 /* jshint node: true */
 'use strict';
 
-var Docker  = require('dockerode');
+var request = require('request');
 var url     = require('url');
 var _       = require('lodash');
 var async   = require('async');
@@ -11,19 +11,26 @@ var service = require('./service');
 var DOCKER_PORT = 2375;
 var PORT_RANGE  = _.range(8000, 8999);
 
-function dockerCmd() {
-  var args = _.toArray(arguments);
-  var host = args.shift();
-  var cmd = args.shift();
-  var docker = new Docker({
-    host: 'http://' + host,
-    port: DOCKER_PORT,
+function createContainer(host, createOptions, fn) {
+  request({
+    url: getDockerUrl(host, 'containers/create'),
+    method: 'post',
+    json: true,
+    body: createOptions,
+  }, function(err, res, body) {
+    fn(err, body);
   });
-  return docker[cmd].apply(docker, args);
 }
 
-function createContainer(host, createOptions, fn) {
-  dockerCmd(host, 'createContainer', createOptions, fn);
+function startContainer(host, containerId, startOptions, fn) {
+  request({
+    url: getDockerUrl(host, 'containers/' + containerId + '/start'),
+    json: true,
+    method: 'post',
+    body: startOptions,
+  }, function(err, res, body) {
+    fn(err, body);
+  });
 }
 
 function createAndStartContainer(host, externalPort, createOptions, fn) {
@@ -32,11 +39,12 @@ function createAndStartContainer(host, externalPort, createOptions, fn) {
       createContainer(host, createOptions, fn);
     },
     function(container, fn) {
-      container.start({
+      var startOptions = {
         'PortBindings': {
           '3000/tcp': [{'HostPort': ''+externalPort}]
         }
-      }, fn);
+      };
+      startContainer(host, container.Id, startOptions, fn);
     }
   ], fn);
 }
@@ -85,22 +93,39 @@ function findAvailablePort(host, fn) {
   });
 }
 
+function getDockerUrl(host, path) {
+  return 'http://' + host + ':' + DOCKER_PORT + '/' + path;
+}
+
+function parseDockerImage(image) {
+  var parts = image.split(':');
+  return {
+    image: parts[0],
+    tag: parts[1],
+  };
+}
+
 function pullDockerImage(host, image, fn) {
-  dockerCmd(host, 'pull', image, function(err, stream) {
-    if (err) {
-      return fn(err);
+  var parts = parseDockerImage(image);
+  request({
+    url: getDockerUrl(host, 'images/create'),
+    method: 'post',
+    qs: {
+      fromImage: parts.name,
+      tag: parts.tag,
     }
-    stream.on('data', function(buff) {
-      console.log(buff.toString());
-    });
-    stream.on('end', function() {
-      fn();
-    });
+  }, function(err, res, body) {
+    fn(err);
   });
 }
 
 function loadContainers(host, fn) {
-  dockerCmd(host, 'listContainers', fn);
+  request({
+    url: getDockerUrl(host, 'containers/json'),
+    json: true,
+  }, function(err, res, body) {
+    fn(err, body);
+  });
 }
 
 function loadContainerByHostAndPort(host, port, fn) {
@@ -116,13 +141,22 @@ function loadContainerByHostAndPort(host, port, fn) {
 }
 
 function inspectContainer(host, containerId, fn) {
-  var container = dockerCmd(host, 'getContainer', containerId);
-  container.inspect(fn);
+  request({
+    url: getDockerUrl(host, 'containers/' + containerId + '/json'),
+    method: 'post',
+    qs: {t: 0},
+  }, function(err, res, body) {
+    fn(err, body);
+  });
 }
 
 function stopContainer(host, containerId, fn) {
-  var container = dockerCmd(host, 'getContainer', containerId);
-  container.stop(fn);
+  request({
+    url: getDockerUrl(host, 'containers/' + containerId + '/stop'),
+    json: true,
+  }, function(err, res, body) {
+    fn(err, body);
+  });
 }
 
 function stopContainerByPort(host, port, fn) {
@@ -265,11 +299,16 @@ function deployAppInstances(app, image, fn) {
 }
 
 function loadContainerLogs(host, containerId, fn) {
-  var container = dockerCmd(host, 'getContainer', containerId);
-  container.logs({
-    stdout: true,
-    stderr: true,
-  }, fn);
+  request({
+    url: getDockerUrl(host, 'containers/' + containerId + '/logs'),
+    method: 'get',
+    qs: {
+      stdout: 1,
+      stderr: 1,
+    }
+  }, function(err, res, body) {
+    fn(err, body);
+  });
 }
 
 function loadAppLogs(app, fn) {
@@ -302,7 +341,9 @@ function killAppInstances(app, fn) {
     if (instances.length) {
       async.map(instances, function(instance, fn) {
         var parts = instance.split(':');
-        killAppInstance(app, parts[0], parts[1], fn);
+        var host  = parts[0];
+        var port  = parts[1];
+        killAppInstance(app, host, port, fn);
       }, fn);
     }
   });
