@@ -158,8 +158,6 @@ app.post('/:app/deploy', function(req, res) {
   }
   count = Math.min(count, 32);
 
-  console.log(req.body.count)
-
   deploy.deployAppInstances(app, image, count, function(err, result) {
     if (err) {
       return res.json(500, {

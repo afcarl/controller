@@ -175,7 +175,6 @@ function loadPortsInUse(host, fn) {
       return fn(err);
     }
     var portsInUse = _.map(containers, function(container) {
-      console.log(container)
       return container.Ports[0].PublicPort;
     });
     fn(null, portsInUse);
