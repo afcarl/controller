@@ -8,7 +8,6 @@ var url        = require('url');
 var _          = require('lodash');
 var async      = require('async');
 var token      = require('./token');
-var service    = require('./service');
 var deploy     = require('./deploy');
 
 var app = express();
@@ -45,7 +44,7 @@ app.get('/describe', function(req, res) {
 });
 
 app.get('/apps', function(req, res) {
-  service.loadApps(function(err, apps) {
+  deploy.loadApps(function(err, apps) {
     if (err) {
       return res.json(500, {
         error: err.message
@@ -64,7 +63,7 @@ app.post('/apps', function(req, res) {
     return res.json({error: errors[0].msg});
   }
 
-  service.addApp(req.body.app, function(err) {
+  deploy.addApp(req.body.app, function(err) {
     if (err) {
       return res.json(500, {
         error: err.message
@@ -83,7 +82,7 @@ app.delete('/apps/:app', function(req, res) {
     return res.json({error: errors[0].msg});
   }
 
-  service.removeApp(req.params.app, function(err) {
+  deploy.removeApp(req.params.app, function(err) {
     if (err) {
       return res.json(500, {
         error: err.message
@@ -94,7 +93,7 @@ app.delete('/apps/:app', function(req, res) {
 });
 
 app.get('/hosts', function(req, res) {
-  service.loadHosts(function(err, hosts) {
+  deploy.loadHosts(function(err, hosts) {
     if (err) {
       return res.json(500, {
         error: err.message
@@ -113,7 +112,7 @@ app.post('/hosts', function(req, res) {
     return res.json({error: errors[0].msg});
   }
 
-  service.addHost(req.body.host, function(err) {
+  deploy.addHost(req.body.host, function(err) {
     if (err) {
       return res.json(500, {
         error: err.message
@@ -131,7 +130,7 @@ app.delete('/hosts/:host', function(req, res) {
     return res.json({error: errors[0].msg});
   }
 
-  service.removeHost(req.params.host, function(err) {
+  deploy.removeHost(req.params.host, function(err) {
     if (err) {
       return res.json(500, {
         error: err.message
@@ -151,7 +150,17 @@ app.post('/:app/deploy', function(req, res) {
     return res.json({error: errors[0].msg});
   }
 
-  deploy.deployAppInstances(req.params.app, req.body.image, function(err, result) {
+  var app   = req.params.app;
+  var image = req.body.image;
+  var count = parseInt(req.body.count, 10);
+  if (isNaN(count)) {
+    count = 2;
+  }
+  count = Math.min(count, 32);
+
+  console.log(req.body.count)
+
+  deploy.deployAppInstances(app, image, count, function(err, result) {
     if (err) {
       return res.json(500, {
         error: err.message
@@ -170,13 +179,32 @@ app.get('/:app/instances', function(req, res) {
     return res.json({error: errors[0].msg});
   }
 
-  service.loadAppInstances(req.params.app, function(err, instances) {
+  deploy.loadAppInstances(req.params.app, function(err, instances) {
     if (err) {
       return res.json(500, {
         error: err.message
       });
     }
     res.json({error: false, instances: instances});
+  });
+});
+
+app.get('/:app/history', function(req, res) {
+
+  req.assert('app').notEmpty();
+
+  var errors = req.validationErrors();
+  if (errors) {
+    return res.json({error: errors[0].msg});
+  }
+
+  deploy.loadDeployments(req.params.app, function(err, deploys) {
+    if (err) {
+      return res.json(500, {
+        error: err.message
+      });
+    }
+    res.json({error: false, history: deploys});
   });
 });
 
@@ -189,7 +217,7 @@ app.get('/:app/envs', function(req, res) {
     return res.json({error: errors[0].msg});
   }
 
-  service.loadAppEnvs(req.params.app, function(err, envs) {
+  deploy.loadAppEnvs(req.params.app, function(err, envs) {
     if (err) {
       return res.json(500, {
         error: err.message
@@ -209,7 +237,7 @@ app.post('/:app/envs', function(req, res) {
     return res.json({error: errors[0].msg});
   }
 
-  service.addAppEnv(req.params.app, req.body.env, function(err, result) {
+  deploy.addAppEnv(req.params.app, req.body.env, function(err, result) {
     if (err) {
       return res.json(500, {
         error: err.message
@@ -229,7 +257,7 @@ app.delete('/:app/envs/:env', function(req, res) {
     return res.json({error: errors[0].msg});
   }
 
-  service.removeAppEnv(req.params.app, req.params.env, function(err, result) {
+  deploy.removeAppEnv(req.params.app, req.params.env, function(err, result) {
     if (err) {
       return res.json(500, {
         error: err.message

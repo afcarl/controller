@@ -1,15 +1,113 @@
 /* jshint node: true */
 'use strict';
 
-var request = require('request');
-var url     = require('url');
-var _       = require('lodash');
-var async   = require('async');
-var util    = require('./util');
-var service = require('./service');
+var request  = require('request');
+var url      = require('url');
+var _        = require('lodash');
+var async    = require('async');
+var util     = require('./util');
+var redisCmd = require('./redis');
 
 var DOCKER_PORT = 2375;
 var PORT_RANGE  = _.range(8000, 8999);
+
+function loadApps(fn) {
+  redisCmd('smembers', 'apps', fn);
+}
+
+function addApp(app, fn) {
+  redisCmd('sadd', 'apps', app, fn);
+}
+
+function removeApp(app, fn) {
+  redisCmd('srem', 'apps', app, fn);
+}
+
+function loadAppEnvs(app, fn) {
+  redisCmd('smembers', app + ':envs', fn);
+}
+
+function addAppEnv(app, env, fn) {
+  redisCmd('sadd', app + ':envs', env, fn);
+}
+
+function removeAppEnv(app, env, fn) {
+  loadAppEnvs(app, function(err, envs) {
+    if (err) {
+      return fn(err);
+    }
+    var matches = _.filter(envs, function(e) {
+      return new RegExp('^' + env).test(e);
+    });
+    async.map(matches, function(match, fn) {
+      redisCmd('srem', app + ':envs', match, fn);
+    }, fn);
+  });
+}
+
+function loadAppInstances(app, fn) {
+  redisCmd('smembers', app + ':instances', fn);
+}
+
+function addAppInstance(app, instance, fn) {
+  redisCmd('sadd', app + ':instances', instance, function(err, result) {
+    if (err) {
+      return fn(err);
+    }
+    notifyRouters(fn);
+  });
+}
+
+function removeAppInstance(app, instance, fn) {
+  redisCmd('srem', app + ':instances', instance, function(err, result) {
+    if (err) {
+      return fn(err);
+    }
+    notifyRouters(fn);
+  });
+}
+
+function loadHosts(fn) {
+  redisCmd('smembers', 'hosts', fn);
+}
+
+function addHost(host, fn) {
+  redisCmd('sadd', 'hosts', host, fn);
+}
+
+function removeHost(host, fn) {
+  redisCmd('srem', 'hosts', host, fn);
+}
+
+function notifyRouters(fn) {
+  redisCmd('publish', 'updates', ''+new Date().getTime(), fn);
+}
+
+function getUnixTimestamp() {
+  return Math.round(new Date().getTime() / 1000);
+}
+
+function saveDeployment(app, image, count, fn) {
+  var hash = {
+    timestamp: getUnixTimestamp(),
+    app: app,
+    image: image,
+    count: count,
+  };
+  redisCmd('lpush', 'deployments:' + app, JSON.stringify(hash), fn);
+}
+
+function loadDeployments(app, fn) {
+  redisCmd('lrange', 'deployments:' + app, -100, -1, function(err, results) {
+    if (err) {
+      return fn(err);
+    }
+    var deployments = _.map(results, function(item) {
+      return JSON.parse(item);
+    });
+    fn(null, deployments);
+  });
+}
 
 function createContainer(host, createOptions, fn) {
   request({
@@ -77,6 +175,7 @@ function loadPortsInUse(host, fn) {
       return fn(err);
     }
     var portsInUse = _.map(containers, function(container) {
+      console.log(container)
       return container.Ports[0].PublicPort;
     });
     fn(null, portsInUse);
@@ -154,6 +253,7 @@ function stopContainer(host, containerId, fn) {
   request({
     url: getDockerUrl(host, 'containers/' + containerId + '/stop'),
     json: true,
+    method: 'post',
   }, function(err, res, body) {
     fn(err, body);
   });
@@ -180,7 +280,7 @@ function deployAppInstance(app, host, port, image, fn) {
       pullDockerImage(host, image, fn);
     },
     function(fn) {
-      service.loadAppEnvs(app, fn);
+      loadAppEnvs(app, fn);
     },
     function(envs, fn) {
       console.log('Starting new container at ' + host + ':' + port);
@@ -191,11 +291,11 @@ function deployAppInstance(app, host, port, image, fn) {
       util.healthCheckHost(host, port, fn);
     },
     function(success, fn) {
-      if (!success) {
+      if (false && !success) {
         fn(new Error('Failed to deploy new instance.'));
       } else {
         console.log('Adding ' + host + ':' + port + ' to router');
-        service.addAppInstance(app, host + ':' + port, fn);
+        addAppInstance(app, host + ':' + port, fn);
       }
     }
   ], function(err, result) {
@@ -223,7 +323,7 @@ function countRunningContainers(host, fn) {
 }
 
 function countAllRunningContainers(fn) {
-  service.loadHosts(function(err, hosts) {
+  loadHosts(function(err, hosts) {
     if (err) {
       return fn(err);
     }
@@ -238,32 +338,58 @@ function countAllRunningContainers(fn) {
   });
 }
 
-function getLeastUtilizedHosts(max, fn) {
-  countAllRunningContainers(function(err, counts) {
-    if (err) {
-      return fn(err);
-    }
-    var hosts = _(counts).sortBy(function(t) {
-      return t[1];
-    }).last(max).pluck(0).value();
-    fn(null, hosts);
+function getContainerDistribution(fn) {
+  var dist = {};
+  loadHosts(function(err, hosts) {
+    async.each(hosts, function(host, fn) {
+      loadContainers(host, function(err, containers) {
+        dist[host] = containers.length;
+        fn(err);
+      });
+    }, function(err) {
+      fn(err, dist);
+    });
   });
 }
 
-function getNumDeployHosts() {
-  return 2; // TODO smarter, specified by cli?
-}
+function deployNewAppInstances(app, image, count, fn) {
 
-function deployNewAppInstances(app, image, fn) {
-  var n = getNumDeployHosts();
-  getLeastUtilizedHosts(n, function(err, hosts) {
-    async.map(hosts, function(node, fn) {
-      findAvailablePort(node, function(err, port) {
-        if (err) {
-          return fn(err);
-        }
-        deployAppInstance(app, node, port, image, fn);
-      });
+  getContainerDistribution(function(err, dist) {
+    var totalContainers = _.reduce(dist, function(sum, count, key) {
+      return sum + count;
+    });
+
+    var hosts = _.keys(dist);
+    var totalHosts = hosts.length;
+    var idealCountPerHost = Math.ceil((totalContainers + count) / totalHosts);
+    var launching = {};
+    _.each(hosts, function(host) {
+      launching[host] = 0;
+    });
+
+    while (count > 0) {
+      var host = hosts[count % totalHosts];
+      var countForHost = dist[host];
+      if (countForHost < idealCountPerHost) {
+        launching[host]++;
+        count--;
+      }
+    }
+
+    async.map(hosts, function(host, fn) {
+      if (launching[host]) {
+        async.times(launching[host], function(n, fn) {
+          findAvailablePort(host, function(err, port) {
+            if (err) {
+              fn(err);
+            } else {
+              deployAppInstance(app, host, port, image, fn);
+            }
+          });
+        }, fn);
+      } else {
+        fn();
+      }
     }, fn);
   });
 }
@@ -275,26 +401,31 @@ function killAppInstance(app, host, port, fn) {
       stopContainerByPort(host, port, fn);
     },
     function(result, fn) {
-      service.removeAppInstance(app, host + ':' + port, fn);
+      removeAppInstance(app, host + ':' + port, fn);
     }
   ], fn);
 }
 
-function deployAppInstances(app, image, fn) {
-  service.loadAppInstances(app, function(err, instances) {
+function deployAppInstances(app, image, count, fn) {
+  loadAppInstances(app, function(err, instances) {
     if (err) {
       return fn(err);
     }
     if (instances.length) {
       var cb = fn;
-      fn = function() {
-        async.map(instances, function(instance, fn) {
-          var parts = instance.split(':');
-          killAppInstance(app, parts[0], parts[1], fn);
-        }, cb);
+      fn = function(err) {
+        if (err) {
+          fn(err);
+        } else {
+          saveDeployment(app, image, count, _.noop);
+          async.map(instances, function(instance, fn) {
+            var parts = instance.split(':');
+            killAppInstance(app, parts[0], parts[1], fn);
+          }, cb);
+        }
       };
     }
-    deployNewAppInstances(app, image, fn);
+    deployNewAppInstances(app, image, count, fn);
   });
 }
 
@@ -314,7 +445,7 @@ function loadContainerLogs(host, containerId, fn) {
 function loadAppLogs(app, fn) {
   async.waterfall([
     function(fn) {
-      service.loadAppInstances(app, fn);
+      loadAppInstances(app, fn);
     },
     function(instances, fn) {
       async.map(instances, function(instance, fn) {
@@ -334,7 +465,7 @@ function loadAppLogs(app, fn) {
 }
 
 function killAppInstances(app, fn) {
-  service.loadAppInstances(app, function(err, instances) {
+  loadAppInstances(app, function(err, instances) {
     if (err) {
       return fn(err);
     }
@@ -351,18 +482,18 @@ function killAppInstances(app, fn) {
 
 function describe(fn) {
   var output = {};
-  service.loadApps(function(err, apps) {
+  loadApps(function(err, apps) {
     async.each(apps, function(app, fn) {
       output[app] = {};
       async.waterfall([
         function(fn) {
-          service.loadAppInstances(app, function(err, instances) {
+          loadAppInstances(app, function(err, instances) {
             output[app].instances = instances;
             fn(err);
           });
         },
         function(fn) {
-          service.loadAppEnvs(app, function(err, envs) {
+          loadAppEnvs(app, function(err, envs) {
             output[app].envs = envs;
             fn(err);
           });
@@ -387,6 +518,7 @@ function describe(fn) {
 }
 
 exports.deployAppInstances = deployAppInstances;
+exports.loadDeployments    = loadDeployments;
 exports.loadAppLogs        = loadAppLogs;
 exports.killAppInstances   = killAppInstances;
 exports.describe           = describe;
