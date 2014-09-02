@@ -75,7 +75,7 @@ describe('hosts', function() {
     });
   });
 
-  describe('pullDockerImage', function() {
+  describe.skip('pullDockerImage', function() {
     it('should download the image', function(done) {
       hosts.pullDockerImage(DOCKER_HOST, 'docker.wayfinder.co:443/wf-image', function(err, result) {
         should.not.exist(err);

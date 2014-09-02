@@ -7,9 +7,8 @@ var util    = require('./util');
 var hosts   = require('./hosts');
 
 function createContainer(host, createOptions, fn) {
-  request({
+  request.post({
     url: util.getDockerUrl(host, 'containers/create'),
-    method: 'post',
     json: true,
     body: createOptions,
   }, function(err, res, body) {
@@ -18,13 +17,12 @@ function createContainer(host, createOptions, fn) {
 }
 
 function startContainer(host, containerId, startOptions, fn) {
-  request({
+  request.post({
     url: util.getDockerUrl(host, 'containers/' + containerId + '/start'),
     json: true,
-    method: 'post',
     body: startOptions,
   }, function(err, res, body) {
-    fn(err, body);
+    fn(err, body); // TODO: why is body blank? docs suggest otherwise
   });
 }
 
@@ -39,7 +37,9 @@ function createAndStartContainer(host, externalPort, createOptions, fn) {
           '3000/tcp': [{'HostPort': ''+externalPort}]
         }
       };
-      startContainer(host, container.Id, startOptions, fn);
+      startContainer(host, container.Id, startOptions, function(err) {
+        fn(err, container.Id);
+      });
     }
   ], fn);
 }
@@ -47,20 +47,20 @@ function createAndStartContainer(host, externalPort, createOptions, fn) {
 function runContainer(host, port, image, envs, fn) {
 
   var createOptions = {
-    'Hostname': '',
-    'User': '',
-    'AttachStdin': false,
-    'AttachStdout': true,
-    'AttachStderr': true,
-    'Tty': true,
-    'OpenStdin': false,
-    'StdinOnce': false,
-    'Env': envs,
-    'Cmd': null,
-    'Image': image,
-    'Volumes': {},
-    'VolumesFrom': '',
-    'ExposedPorts': {'3000/tcp': {}},
+    Hostname: '',
+    User: '',
+    AttachStdin: false,
+    AttachStdout: true,
+    AttachStderr: true,
+    Tty: true,
+    OpenStdin: false,
+    StdinOnce: false,
+    Env: envs,
+    Cmd: null,
+    Image: image,
+    Volumes: {},
+    VolumesFrom: '',
+    ExposedPorts: {'3000/tcp': {}},
   };
 
   createAndStartContainer(host, port, createOptions, fn);
