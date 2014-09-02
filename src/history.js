@@ -32,6 +32,11 @@ function loadMostRecentDeployment(app, fn) {
   });
 }
 
+function clearDeployments(app, fn) {
+  redisCmd('del', 'deployments:' + app, fn);
+}
+
 exports.saveDeployment = saveDeployment;
 exports.loadDeployments = loadDeployments;
 exports.loadMostRecentDeployment = loadMostRecentDeployment;
+exports.clearDeployments = clearDeployments;
