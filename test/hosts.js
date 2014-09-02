@@ -65,6 +65,23 @@ describe('hosts', function() {
     });
   });
 
+  describe('findAvailablePort', function() {
+    it('should return a free port', function(done) {
+      hosts.findAvailablePort(DOCKER_HOST, function(err, port) {
+        should.not.exist(err);
+        port.should.be.within(8000, 8999);
+        done();
+      });
+    });
+  });
 
+  describe('pullDockerImage', function() {
+    it('should download the image', function(done) {
+      hosts.pullDockerImage(DOCKER_HOST, 'docker.wayfinder.co:443/wf-image', function(err, result) {
+        should.not.exist(err);
+        done();
+      });
+    });
+  });
 
 });

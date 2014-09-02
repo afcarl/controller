@@ -14,11 +14,19 @@ function getDockerUrl(host, path) {
 }
 
 function parseDockerImage(image) {
-  var parts = image.split(':');
-  return {
-    image: parts[0],
-    tag: parts[1] || '',
+  var parts = image.split('/');
+  var result = {
+    user: parts[0],
+    repo: parts[1],
+    tag: null,
   };
+  if (result.repo.indexOf(':') > -1) {
+    parts = result.repo.split(':');
+    result.repo = parts[0];
+    result.tag = parts[1];
+  }
+  result.name = result.user + '/' + result.repo;
+  return result;
 }
 
 exports.getUnixTimestamp = getUnixTimestamp;

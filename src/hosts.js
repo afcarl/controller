@@ -50,9 +50,10 @@ function pullDockerImage(host, image, fn) {
     qs: {
       fromImage: parts.name,
       tag: parts.tag,
-    }
+    },
+    json: true,
   }, function(err, res, body) {
-    fn(err);
+    fn(err, body);
   });
 }
 

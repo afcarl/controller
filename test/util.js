@@ -21,13 +21,15 @@ describe('util', function() {
   describe('parseDockerImage', function() {
     it('should parse out the docker image name and tag', function() {
       var image = util.parseDockerImage('longshoreman/router');
-      image.should.have.property('image', 'longshoreman/router');
-      image.should.have.property('tag', '');
+      image.should.have.property('user', 'longshoreman');
+      image.should.have.property('repo', 'router');
+      image.should.have.property('tag', null);
     });
 
     it('should handle image tag correctly', function() {
       var image = util.parseDockerImage('longshoreman/router:tag');
-      image.should.have.property('image', 'longshoreman/router');
+      image.should.have.property('user', 'longshoreman');
+      image.should.have.property('repo', 'router');
       image.should.have.property('tag', 'tag');
     });
   });
