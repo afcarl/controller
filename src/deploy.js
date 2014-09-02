@@ -109,6 +109,12 @@ function loadDeployments(app, fn) {
   });
 }
 
+function loadMostRecentDeployment(app, fn) {
+  redisCmd('lindex', 'deployments:' + app, -1, function(err, result) {
+    fn(err, result && JSON.parse(result));
+  });
+}
+
 function createContainer(host, createOptions, fn) {
   request({
     url: getDockerUrl(host, 'containers/create'),
@@ -498,16 +504,10 @@ function describe(fn) {
           });
         },
         function(fn) {
-          if (output[app].instances.length > 0) {
-            var instance = output[app].instances[0];
-            var parts = instance.split(':');
-            loadContainerByHostAndPort(parts[0], parts[1], function(err, container) {
-              output[app].image = container.Image;
-              fn(err);
-            });
-          } else {
-            fn(null);
-          }
+          loadMostRecentDeployment('asdf', function(err, deployment) {
+            output[app].image = deployment && deployment.image;
+            fn(err);
+          });
         }
       ], fn);
     }, function(err) {
