@@ -4,7 +4,7 @@
   "description": "Deploy Docker containers in the clouds",
   "main": "index.js",
   "scripts": {
-    "test": "mocha"
+    "test": "sh ./test/run.sh"
   },
   "author": "Mike Holly <mikejholly@gmail.com>",
   "license": "ISC",
@@ -16,5 +16,8 @@
     "express": "^4.4.1",
     "async": "^0.9.0",
     "request": "^2.40.0"
+  },
+  "devDependencies": {
+    "should": "^4.0.4"
   }
 }
