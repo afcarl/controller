@@ -504,7 +504,7 @@ function describe(fn) {
           });
         },
         function(fn) {
-          loadMostRecentDeployment('asdf', function(err, deployment) {
+          loadMostRecentDeployment(app, function(err, deployment) {
             output[app].image = deployment && deployment.image;
             fn(err);
           });
