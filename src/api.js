@@ -1,4 +1,3 @@
-/* jslint node: true */
 'use strict';
 
 var express    = require('express');
@@ -8,7 +7,12 @@ var url        = require('url');
 var _          = require('lodash');
 var async      = require('async');
 var token      = require('./token');
-var deploy     = require('./deploy');
+var service    = require('./service');
+var apps       = require('./apps');
+var hosts      = require('./hosts');
+var instances  = require('./instances');
+var history    = require('./history');
+var logs       = require('./logs');
 
 var app = express();
 
@@ -17,8 +21,9 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(bodyParser.json());
 app.use(validator());
+app.use(authMiddleware);
 
-app.use(function(req, res, next) {
+function authMiddleware(req, res, next) {
   token.checkToken(req.headers['x-auth'], function(err, valid) {
     if (!valid) {
       res.json(401, {
@@ -29,11 +34,11 @@ app.use(function(req, res, next) {
       next();
     }
   });
-});
+}
 
 app.get('/describe', function(req, res) {
   var output = {};
-  deploy.describe(function(err, description) {
+  service.describe(function(err, description) {
     if (err) {
       return res.json(500, {
         error: err.message,
@@ -44,13 +49,13 @@ app.get('/describe', function(req, res) {
 });
 
 app.get('/apps', function(req, res) {
-  deploy.loadApps(function(err, apps) {
+  apps.loadApps(function(err, _apps) {
     if (err) {
       return res.json(500, {
         error: err.message
       });
     }
-    res.json({error: false, apps: apps});
+    res.json({error: false, apps: _apps});
   });
 });
 
@@ -63,7 +68,7 @@ app.post('/apps', function(req, res) {
     return res.json({error: errors[0].msg});
   }
 
-  deploy.addApp(req.body.app, function(err) {
+  apps.addApp(req.body.app, function(err) {
     if (err) {
       return res.json(500, {
         error: err.message
@@ -82,7 +87,7 @@ app.delete('/apps/:app', function(req, res) {
     return res.json({error: errors[0].msg});
   }
 
-  deploy.removeApp(req.params.app, function(err) {
+  apps.removeApp(req.params.app, function(err) {
     if (err) {
       return res.json(500, {
         error: err.message
@@ -93,7 +98,7 @@ app.delete('/apps/:app', function(req, res) {
 });
 
 app.get('/hosts', function(req, res) {
-  deploy.loadHosts(function(err, hosts) {
+  hosts.loadHosts(function(err, hosts) {
     if (err) {
       return res.json(500, {
         error: err.message
@@ -112,7 +117,7 @@ app.post('/hosts', function(req, res) {
     return res.json({error: errors[0].msg});
   }
 
-  deploy.addHost(req.body.host, function(err) {
+  hosts.addHost(req.body.host, function(err) {
     if (err) {
       return res.json(500, {
         error: err.message
@@ -130,7 +135,7 @@ app.delete('/hosts/:host', function(req, res) {
     return res.json({error: errors[0].msg});
   }
 
-  deploy.removeHost(req.params.host, function(err) {
+  hosts.removeHost(req.params.host, function(err) {
     if (err) {
       return res.json(500, {
         error: err.message
@@ -158,7 +163,7 @@ app.post('/:app/deploy', function(req, res) {
   }
   count = Math.min(count, 32);
 
-  deploy.deployAppInstances(app, image, count, function(err, result) {
+  instances.deployAppInstances(app, image, count, function(err, result) {
     if (err) {
       return res.json(500, {
         error: err.message
@@ -177,7 +182,7 @@ app.get('/:app/instances', function(req, res) {
     return res.json({error: errors[0].msg});
   }
 
-  deploy.loadAppInstances(req.params.app, function(err, instances) {
+  instances.loadAppInstances(req.params.app, function(err, instances) {
     if (err) {
       return res.json(500, {
         error: err.message
@@ -196,7 +201,7 @@ app.get('/:app/history', function(req, res) {
     return res.json({error: errors[0].msg});
   }
 
-  deploy.loadDeployments(req.params.app, function(err, deploys) {
+  history.loadDeployments(req.params.app, function(err, deploys) {
     if (err) {
       return res.json(500, {
         error: err.message
@@ -215,7 +220,7 @@ app.get('/:app/envs', function(req, res) {
     return res.json({error: errors[0].msg});
   }
 
-  deploy.loadAppEnvs(req.params.app, function(err, envs) {
+  envs.loadAppEnvs(req.params.app, function(err, envs) {
     if (err) {
       return res.json(500, {
         error: err.message
@@ -235,7 +240,7 @@ app.post('/:app/envs', function(req, res) {
     return res.json({error: errors[0].msg});
   }
 
-  deploy.addAppEnv(req.params.app, req.body.env, function(err, result) {
+  envs.addAppEnv(req.params.app, req.body.env, function(err, result) {
     if (err) {
       return res.json(500, {
         error: err.message
@@ -255,7 +260,7 @@ app.delete('/:app/envs/:env', function(req, res) {
     return res.json({error: errors[0].msg});
   }
 
-  deploy.removeAppEnv(req.params.app, req.params.env, function(err, result) {
+  envs.removeAppEnv(req.params.app, req.params.env, function(err, result) {
     if (err) {
       return res.json(500, {
         error: err.message
@@ -274,7 +279,7 @@ app.get('/:app/logs', function(req, res) {
     return res.json({error: errors[0].msg});
   }
 
-  deploy.loadAppLogs(req.params.app, function(err, logs) {
+  logs.loadAppLogs(req.params.app, function(err, logs) {
     if (err) {
       return res.json(500, {
         error: err.message
@@ -293,7 +298,7 @@ app.get('/:app/kill', function(req, res) {
     return res.json({error: errors[0].msg});
   }
 
-  deploy.killAppInstances(req.params.app, function(err) {
+  instances.killAppInstances(req.params.app, function(err) {
     if (err) {
       return res.json(500, {
         error: err.message
