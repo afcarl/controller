@@ -33,3 +33,5 @@ function checkToken(compare, fn) {
 }
 
 exports.checkToken = checkToken;
+exports.getToken = getToken;
+exports.createToken = createToken;

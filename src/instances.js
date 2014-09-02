@@ -1,6 +1,7 @@
 'use strict';
 
 var async      = require('async');
+var request    = require('request');
 var _          = require('lodash');
 var redisCmd   = require('./redis');
 var routers    = require('./routers');
@@ -32,6 +33,22 @@ function removeAppInstance(app, instance, fn) {
   });
 }
 
+function healthCheckInstance(hostname, port, fn) {
+  var healthCheckUrl = 'http://' + hostname + ':' + port + '/ping';
+  async.retry(10, function(fn) {
+    request({
+      url: healthCheckUrl,
+      timeout: 5000,
+    }, function(err, res) {
+      if (err) {
+        fn(null, false);
+      } else {
+        fn(null, res.statusCode == 200);
+      }
+    });
+  }, fn);
+}
+
 function deployAppInstance(app, host, port, image, fn) {
   async.waterfall([
     function(fn) {
@@ -47,7 +64,7 @@ function deployAppInstance(app, host, port, image, fn) {
     },
     function(container, fn) {
       console.log('Checking host health');
-      util.healthCheckHost(host, port, fn);
+      healthCheckInstance(host, port, fn);
     },
     function(success, fn) {
       if (false && !success) {
@@ -174,3 +191,4 @@ exports.killAppInstance = killAppInstance;
 exports.deployAppInstances = deployAppInstances;
 exports.killAppInstance = killAppInstance;
 exports.killAppInstances = killAppInstances;
+exports.healthCheckInstance = healthCheckInstance;

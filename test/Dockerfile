@@ -1,5 +1,5 @@
 FROM node
-RUN npm install http-server
+RUN npm install http-server -g
 ADD ./app /usr/src/app
 WORKDIR /usr/src/app
 EXPOSE 3000
