@@ -208,3 +208,4 @@ exports.deployAppInstances = deployAppInstances;
 exports.killAppInstance = killAppInstance;
 exports.killAppInstances = killAppInstances;
 exports.healthCheckInstance = healthCheckInstance;
+exports.allocateContainers = allocateContainers;

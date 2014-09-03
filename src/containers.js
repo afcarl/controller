@@ -201,9 +201,12 @@ function getContainerDistribution(fn) {
   var dist = {};
   hosts.loadHosts(function(err, hosts) {
     async.each(hosts, function(host, fn) {
-      loadContainers(host, function(err, containers) {
-        dist[host] = containers.length;
-        fn(err);
+      countRunningContainers(host, function(err, count) {
+        if (err) {
+          return fn(err);
+        }
+        dist[host] = count;
+        fn();
       });
     }, function(err) {
       fn(err, dist);

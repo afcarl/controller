@@ -1,7 +1,9 @@
 
 var should     = require('should');
+var async      = require('async');
 var instances  = require('../src/instances');
 var containers = require('../src/containers');
+var hosts      = require('../src/hosts');
 
 var DOCKER_HOST  = process.env.DOCKER_HOST;
 var DOCKER_IMAGE = process.env.DOCKER_IMAGE;
@@ -66,10 +68,51 @@ describe('instances', function() {
       containers.deleteContainer(DOCKER_HOST, containerId, done);
     });
 
-    it('should return a list of instances', function(done) {
+    it('should return true when checking healthy host', function(done) {
       instances.healthCheckInstance(DOCKER_HOST, 3000, function(err, healthy) {
         should.not.exist(err);
         healthy.should.be.ok;
+        done();
+      });
+    });
+
+  });
+
+  describe('allocateContainers', function() {
+
+    var containerIds = [];
+    var n = 4;
+
+    before(function(done) {
+      async.times(n, function(i, fn) {
+        containers.runContainer(DOCKER_HOST, 8000 + i, DOCKER_IMAGE, null, function(err, containerId) {
+          containerIds.push(containerId);
+          fn(err);
+        });
+      }, function(err) {
+        if (err) {
+          return done(err);
+        }
+        hosts.addHost('127.0.0.1', done);
+      });
+    });
+
+    after(function(done) {
+      async.each(containerIds, function(containerId, fn) {
+        containers.deleteContainer(DOCKER_HOST, containerId, fn);
+      }, function(err) {
+        if (err) {
+          return done(err);
+        }
+        hosts.removeHost('127.0.0.1', done);
+      });
+    });
+
+    it('should return a list of instances', function(done) {
+      instances.allocateContainers(20, function(err, allocated) {
+        should.not.exist(err);
+        allocated[DOCKER_HOST].should.eql(10);
+        allocated['127.0.0.1'].should.eql(10);
         done();
       });
     });
