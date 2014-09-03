@@ -1,6 +1,7 @@
 
 var should     = require('should');
 var async      = require('async');
+var _          = require('lodash');
 var instances  = require('../src/instances');
 var containers = require('../src/containers');
 var hosts      = require('../src/hosts');
@@ -114,6 +115,53 @@ describe('instances', function() {
         allocated[DOCKER_HOST].should.eql(10);
         allocated['127.0.0.1'].should.eql(10);
         done();
+      });
+    });
+
+  });
+
+  describe('deployAppInstance', function() {
+
+    var containerId = null;
+
+    after(function(done) {
+      containers.deleteContainer(DOCKER_HOST, containerId, done);
+    });
+
+    it('should deploy a new app instance', function(done) {
+      instances.deployAppInstance(APP_NAME, DOCKER_HOST, 3000, DOCKER_IMAGE, function(err) {
+        should.not.exist(err);
+        containers.loadContainers(DOCKER_HOST, function(err, _containers) {
+          should.not.exist(err);
+          _containers.should.have.lengthOf(1);
+          containerId = _containers[0].Id;
+          done();
+        });
+      });
+    });
+
+  });
+
+  describe('deployNewAppInstances', function() {
+
+    var containerIds = [];
+
+    after(function(done) {
+      async.each(containerIds, function(containerId, fn) {
+        containers.deleteContainer(DOCKER_HOST, containerId, done);
+      }, done)
+    });
+
+    it('should deploy a new app instance', function(done) {
+      instances.deployNewAppInstances(APP_NAME, DOCKER_IMAGE, 2, function(err, launched) {
+        should.not.exist(err);
+        containers.loadContainers(DOCKER_HOST, function(err, _containers) {
+          should.not.exist(err);
+          _containers.should.have.lengthOf(2);
+          containerIds = _.pluck(_containers, 'Id');
+          console.log(containerIds);
+          done();
+        });
       });
     });
 

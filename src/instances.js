@@ -3,6 +3,7 @@
 var async      = require('async');
 var request    = require('request');
 var _          = require('lodash');
+var debug      = require('debug')('longshoreman');
 var redisCmd   = require('./redis');
 var routers    = require('./routers');
 var hosts      = require('./hosts');
@@ -52,31 +53,31 @@ function healthCheckInstance(hostname, port, fn) {
 function deployAppInstance(app, host, port, image, fn) {
   async.waterfall([
     function(fn) {
-      console.log('Pulling new tags for ' + image);
+      debug('Pulling new tags for ' + image);
       hosts.pullDockerImage(host, image, fn);
     },
     function(status, fn) {
       envs.loadAppEnvs(app, fn);
     },
     function(envs, fn) {
-      console.log('Starting new container at ' + host + ':' + port);
+      debug('Starting new container at ' + host + ':' + port);
       containers.runContainer(host, port, image, envs, fn);
     },
     function(container, fn) {
-      console.log('Checking host health');
+      debug('Checking host health');
       healthCheckInstance(host, port, fn);
     },
     function(success, fn) {
       if (false && !success) {
         fn(new Error('Failed to deploy new instance.'));
       } else {
-        console.log('Adding ' + host + ':' + port + ' to router');
+        debug('Adding ' + host + ':' + port + ' to router');
         addAppInstance(app, host + ':' + port, fn);
       }
     }
   ], function(err, result) {
     if (err) {
-      console.log('Deploy failed. Rolling back.');
+      debug('Deploy failed. Rolling back.');
       killAppInstance(app, host, port, function(_err) {
         if (_err) {
           return fn(new Error('Rollback failed. System may be in an invalid state.'));
@@ -105,7 +106,7 @@ function allocateContainers(count, fn) {
     var totalHosts = hosts.length;
     var idealCountPerHost = Math.ceil((totalContainers + count) / totalHosts);
 
-    console.log(count, dist, totalContainers, totalHosts, idealCountPerHost);
+    debug(count, dist, totalContainers, totalHosts, idealCountPerHost);
 
     var allocated = {};
 
@@ -133,7 +134,7 @@ function deployNewAppInstances(app, image, count, fn) {
       return fn(err);
     }
     var _hosts = Object.keys(allocated);
-    async.map(_hosts, function(host, fn) {
+    async.each(_hosts, function(host, fn) {
       async.times(allocated[host], function(n, fn) {
         hosts.findAvailablePort(host, function(err, port) {
           if (err) {
@@ -143,7 +144,9 @@ function deployNewAppInstances(app, image, count, fn) {
           }
         });
       }, fn);
-    }, fn);
+    }, function(err) {
+      fn(err, allocated);
+    });
   });
 }
 
