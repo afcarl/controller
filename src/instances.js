@@ -105,6 +105,8 @@ function allocateContainers(count, fn) {
     var totalHosts = hosts.length;
     var idealCountPerHost = Math.ceil((totalContainers + count) / totalHosts);
 
+    console.log(count, dist, totalContainers, totalHosts, idealCountPerHost);
+
     var allocated = {};
 
     _.each(hosts, function(host) {
