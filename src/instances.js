@@ -55,7 +55,7 @@ function deployAppInstance(app, host, port, image, fn) {
       console.log('Pulling new tags for ' + image);
       hosts.pullDockerImage(host, image, fn);
     },
-    function(fn) {
+    function(status, fn) {
       envs.loadAppEnvs(app, fn);
     },
     function(envs, fn) {
@@ -113,8 +113,9 @@ function allocateContainers(count, fn) {
       allocated[host] = 0;
     });
 
+    var n = 0;
     while (count > 0) {
-      var host = hosts[count % totalHosts];
+      var host = hosts[n++ % totalHosts];
       var countForHost = dist[host];
       if (countForHost < idealCountPerHost) {
         allocated[host]++;
@@ -131,20 +132,17 @@ function deployNewAppInstances(app, image, count, fn) {
     if (err) {
       return fn(err);
     }
-    async.map(hosts, function(host, fn) {
-      if (allocated[host]) {
-        async.times(allocated[host], function(n, fn) {
-          hosts.findAvailablePort(host, function(err, port) {
-            if (err) {
-              fn(err);
-            } else {
-              deployAppInstance(app, host, port, image, fn);
-            }
-          });
-        }, fn);
-      } else {
-        fn();
-      }
+    var _hosts = Object.keys(allocated);
+    async.map(_hosts, function(host, fn) {
+      async.times(allocated[host], function(n, fn) {
+        hosts.findAvailablePort(host, function(err, port) {
+          if (err) {
+            fn(err);
+          } else {
+            deployAppInstance(app, host, port, image, fn);
+          }
+        });
+      }, fn);
     }, fn);
   });
 }

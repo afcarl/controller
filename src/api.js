@@ -13,6 +13,7 @@ var hosts      = require('./hosts');
 var instances  = require('./instances');
 var history    = require('./history');
 var logs       = require('./logs');
+var envs       = require('./envs');
 
 var app = express();
 
