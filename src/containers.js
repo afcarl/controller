@@ -12,7 +12,13 @@ function createContainer(host, createOptions, fn) {
     json: true,
     body: createOptions,
   }, function(err, res, body) {
-    fn(err, body);
+    if (err) {
+      fn(err);
+    } else if (!util.isResponseOk(res.statusCode)) {
+      fn(new Error(body));
+    } else {
+      fn(null, body);
+    }
   });
 }
 
@@ -22,7 +28,13 @@ function startContainer(host, containerId, startOptions, fn) {
     json: true,
     body: startOptions,
   }, function(err, res, body) {
-    fn(err, body); // TODO: why is body blank? docs suggest otherwise
+    if (err) {
+      fn(err);
+    } else if (!util.isResponseOk(res.statusCode)) {
+      fn(new Error(body));
+    } else {
+      fn(null, body); // TODO: why is body blank? docs suggest otherwise
+    }
   });
 }
 
@@ -33,12 +45,16 @@ function createAndStartContainer(host, externalPort, createOptions, fn) {
     },
     function(container, fn) {
       var startOptions = {
-        'PortBindings': {
-          '3000/tcp': [{'HostPort': ''+externalPort}]
+        PortBindings: {
+          '3000/tcp': [{HostPort: ''+externalPort}]
         }
       };
       startContainer(host, container.Id, startOptions, function(err) {
-        fn(err, container.Id);
+        if (err) {
+          fn(err);
+        } else {
+          fn(null, container.Id);
+        }
       });
     }
   ], fn);
@@ -71,7 +87,13 @@ function loadContainers(host, fn) {
     url: util.getDockerUrl(host, 'containers/json'),
     json: true,
   }, function(err, res, body) {
-    fn(err, body);
+    if (err) {
+      fn(err);
+    } else if (!util.isResponseOk(res.statusCode)) {
+      fn(new Error(body));
+    } else {
+      fn(null, body);
+    }
   });
 }
 
@@ -90,20 +112,65 @@ function loadContainerByHostAndPort(host, port, fn) {
 function inspectContainer(host, containerId, fn) {
   request({
     url: util.getDockerUrl(host, 'containers/' + containerId + '/json'),
-    method: 'post',
     qs: {t: 0},
+    json: true,
   }, function(err, res, body) {
-    fn(err, body);
+    if (err) {
+      fn(err);
+    } else if (!util.isResponseOk(res.statusCode)) {
+      fn(new Error(body));
+    } else {
+      fn(null, body);
+    }
   });
 }
 
 function stopContainer(host, containerId, fn) {
-  request({
+  request.post({
     url: util.getDockerUrl(host, 'containers/' + containerId + '/stop'),
     json: true,
-    method: 'post',
   }, function(err, res, body) {
-    fn(err, body);
+    if (err) {
+      fn(err);
+    } else if (!util.isResponseOk(res.statusCode)) {
+      fn(new Error(body));
+    } else {
+      fn(null, body);
+    }
+  });
+}
+
+function killContainer(host, containerId, fn) {
+  request.post({
+    url: util.getDockerUrl(host, 'containers/' + containerId + '/kill'),
+    json: true,
+  }, function(err, res, body) {
+    if (err) {
+      fn(err);
+    } else if (!util.isResponseOk(res.statusCode)) {
+      fn(new Error(body));
+    } else {
+      fn(null, body);
+    }
+  });
+}
+
+function deleteContainer(host, containerId, fn) {
+  request.del({
+    url: util.getDockerUrl(host, 'containers/' + containerId),
+    qs: {
+      force: 1,
+      v: 1,
+    },
+    json: true,
+  }, function(err, res, body) {
+    if (err) {
+      fn(err);
+    } else if (!util.isResponseOk(res.statusCode)) {
+      fn(new Error(body));
+    } else {
+      fn(null, body);
+    }
   });
 }
 
@@ -130,22 +197,6 @@ function countRunningContainers(host, fn) {
   });
 }
 
-function countAllRunningContainers(fn) {
-  hosts.loadHosts(function(err, hosts) {
-    if (err) {
-      return fn(err);
-    }
-    async.map(hosts, function(host, fn) {
-      countRunningContainers(host, function(err, count) {
-        if (err) {
-          return fn(err);
-        }
-        fn(null, [host, count]);
-      });
-    }, fn);
-  });
-}
-
 function getContainerDistribution(fn) {
   var dist = {};
   hosts.loadHosts(function(err, hosts) {
@@ -168,7 +219,8 @@ exports.loadContainers = loadContainers;
 exports.loadContainerByHostAndPort = loadContainerByHostAndPort;
 exports.inspectContainer = inspectContainer;
 exports.stopContainer = stopContainer;
+exports.killContainer = killContainer;
+exports.deleteContainer = deleteContainer;
 exports.stopContainerByPort = stopContainerByPort;
 exports.countRunningContainers = countRunningContainers;
-exports.countAllRunningContainers = countAllRunningContainers;
 exports.getContainerDistribution = getContainerDistribution;

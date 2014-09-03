@@ -48,12 +48,17 @@ describe('hosts', function() {
   });
 
   describe('loadPortsInUse', function() {
+    var containerId = null;
+
     before(function(done) {
-      containers.runContainer(DOCKER_HOST, 8000, DOCKER_IMAGE, {}, done);
+      containers.runContainer(DOCKER_HOST, 8000, DOCKER_IMAGE, null, function(err, _containerId) {
+        containerId = _containerId;
+        done(err);
+      });
     });
 
     after(function(done) {
-      containers.stopContainerByPort(DOCKER_HOST, 8000, done);
+      containers.deleteContainer(DOCKER_HOST, containerId, done);
     });
 
     it('should return the used ports on this host', function(done) {

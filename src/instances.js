@@ -89,9 +89,14 @@ function deployAppInstance(app, host, port, image, fn) {
   });
 }
 
-function deployNewAppInstances(app, image, count, fn) {
+function allocateContainers(count, fn) {
 
   containers.getContainerDistribution(function(err, dist) {
+
+    if (err) {
+      return fn(err);
+    }
+
     var totalContainers = _.reduce(dist, function(sum, count, key) {
       return sum + count;
     });
@@ -99,23 +104,34 @@ function deployNewAppInstances(app, image, count, fn) {
     var hosts = _.keys(dist);
     var totalHosts = hosts.length;
     var idealCountPerHost = Math.ceil((totalContainers + count) / totalHosts);
-    var launching = {};
+
+    var allocated = {};
+
     _.each(hosts, function(host) {
-      launching[host] = 0;
+      allocated[host] = 0;
     });
 
     while (count > 0) {
       var host = hosts[count % totalHosts];
       var countForHost = dist[host];
       if (countForHost < idealCountPerHost) {
-        launching[host]++;
+        allocated[host]++;
         count--;
       }
     }
 
+    fn(null, allocated);
+  });
+}
+
+function deployNewAppInstances(app, image, count, fn) {
+  allocateContainers(count, function(err, allocated) {
+    if (err) {
+      return fn(err);
+    }
     async.map(hosts, function(host, fn) {
-      if (launching[host]) {
-        async.times(launching[host], function(n, fn) {
+      if (allocated[host]) {
+        async.times(allocated[host], function(n, fn) {
           hosts.findAvailablePort(host, function(err, port) {
             if (err) {
               fn(err);
