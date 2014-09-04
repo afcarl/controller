@@ -148,8 +148,8 @@ describe('instances', function() {
 
     after(function(done) {
       async.each(containerIds, function(containerId, fn) {
-        containers.deleteContainer(DOCKER_HOST, containerId, done);
-      }, done)
+        containers.deleteContainer(DOCKER_HOST, containerId, fn);
+      }, done);
     });
 
     it('should deploy a new app instance', function(done) {

@@ -2,9 +2,10 @@
 
 var request    = require('request');
 var async      = require('async');
-var util       = require('util');
+var debug      = require('debug')('longshoreman');
 var containers = require('./containers');
 var instances  = require('./instances');
+var util       = require('./util');
 
 function loadContainerLogs(host, containerId, fn) {
   request({
@@ -33,7 +34,7 @@ function loadAppLogs(app, fn) {
           if (err) {
             return fn(err);
           }
-          console.log('Loading logs for ' + instance);
+          debug('Loading logs for ' + instance);
           loadContainerLogs(host, container.Id, fn);
         });
       }, fn);
